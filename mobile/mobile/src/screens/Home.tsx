@@ -7,36 +7,49 @@ import { generateDatesFromYearStart } from '../utils/generate-range-between-date
 
 import { DAY_SIZE, HabitDay } from "../components/HabitDay"
 import { Header } from "../components/Header"
+import { Loading } from "../components/Loading"
+import dayjs from 'dayjs';
 
 const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 const datesFromYearStart = generateDatesFromYearStart();
 const minimumSummaryDatesSizes = 18 * 5;
 const amountOfDaysToFill = minimumSummaryDatesSizes - datesFromYearStart.length;
 
+type SummaryProps = Array<{
+    id: string;
+    date: string;
+    amount: number;
+    completed: number;
+}>
+
 export function Home() {
     const [loading, setLoading] = useState(true)
-    const [summary, setSummary] = useState(null)
+    const [summary, setSummary] = useState<SummaryProps | null>(null)
 
-    const {navigate} = useNavigation();
+    const { navigate } = useNavigation();
 
     async function fetchData() {
         try {
-          setLoading(true)
-          const response = await api.get('/summary');
-          console.log(response.data)
-          setSummary(response.data)
+            setLoading(true)
+            const response = await api.get('/summary');
+            setSummary(response.data)
         } catch (error) {
-          Alert.alert('Ops', 'Não foi possível carregar o sumário de hábitos.')
-          console.log(error)
+            Alert.alert('Ops', 'Não foi possível carregar o sumário de hábitos.')
+            console.log(error)
         } finally {
-          setLoading(false)
+            setLoading(false)
         }
-      }
-    
-      useEffect(() => {
-          fetchData()
-        }, [])
+    }
 
+    useEffect(() => {
+        fetchData()
+    }, [])
+
+    if (Loading) {
+        return (
+            <Loading />
+        )
+    }
     return (
         <View className="flex-1 bg-background px-8 pt-16">
             <Header />
@@ -53,31 +66,42 @@ export function Home() {
             </View>
             <ScrollView
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{paddingBottom: 100}}
+                contentContainerStyle={{ paddingBottom: 100 }}
             >
-            <View className="flex-row flex-wrap">
                 {
-                    datesFromYearStart.map(date => (
-                        <HabitDay
-                            key={date.toISOString()} 
-                            onPress={() => navigate('habit', { date: date.toISOString()})}
-                            />
-                    ))
+                    summary &&
+                    <View className="flex-row flex-wrap">
+                        {
+                            datesFromYearStart.map(date => {
+                                const dayWithHabits = summary.find(day => {
+                                    return dayjs(date).isSame(day.date, 'day')
+                                })
+                                return (
+                                    <HabitDay
+                                        key={date.toISOString()}
+                                        date={date}
+                                        amountOfHabits={dayWithHabits?.amount}
+                                        amountOfCompleted={dayWithHabits?.completed}
+                                        onPress={() => navigate('habit', { date: date.toISOString() })}
+                                    />
+                                )
+                            })
+                        }
+
+                        {
+                            amountOfDaysToFill > 0 && Array
+                                .from({ length: amountOfDaysToFill })
+                                .map((_, index) => (
+                                    <View
+                                        key={index}
+                                        className='bg-zinc-900 rounded-lg border-2 m-1 border-zinc-800 opacity-40'
+                                        style={{ width: DAY_SIZE, height: DAY_SIZE }}
+                                    />
+                                )
+                                )}
+
+                    </View>
                 }
-
-                {
-                    amountOfDaysToFill > 0 && Array
-                        .from({ length: amountOfDaysToFill })
-                        .map((_, index) => (
-                            <View
-                            key={index}
-                                className='bg-zinc-900 rounded-lg border-2 m-1 border-zinc-800 opacity-40'
-                                style={{ width: DAY_SIZE, height: DAY_SIZE }}
-                            />
-                        )
-                        )}
-
-            </View>
 
             </ScrollView>
         </View>

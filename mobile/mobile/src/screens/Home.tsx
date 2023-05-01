@@ -45,11 +45,11 @@ export function Home() {
         fetchData()
     }, [])
 
-    if (Loading) {
+    if (loading) {
         return (
-            <Loading />
+          <Loading />
         )
-    }
+      }
     return (
         <View className="flex-1 bg-background px-8 pt-16">
             <Header />

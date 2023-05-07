@@ -16,7 +16,7 @@ const weekDays = [
 
 const summaryDates = generateDatesFromYearBeggining()
 
-const minimumSummaryDatesSize = 18 * 7 // 18 weeks
+const minimumSummaryDatesSize = 20 * 7 // 20 weeks
 const amountOfDaysToFill = minimumSummaryDatesSize - summaryDates.length
 
 type Summary = {
